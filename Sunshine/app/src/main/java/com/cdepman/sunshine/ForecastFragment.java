@@ -1,10 +1,14 @@
 package com.cdepman.sunshine;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -24,12 +28,36 @@ public class ForecastFragment extends Fragment {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
+    public ForecastFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater){
+        inflater.inflate(R.menu.forecastfragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        int id = item.getItemId();
+        Log.v(LOG_TAG, "ITEM SELECTED");
+        if (id == R.id.action_refresh){
+            new FetchForecastTask().execute();
+            Log.v(LOG_TAG, "REFRESH SELECTED");
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        ListView forecastList = (ListView) rootView.findViewById(R.id.listView_Layout);
 
         String[] exampleData = {
                 "Today - Sunny - 88/63",
@@ -45,6 +73,10 @@ public class ForecastFragment extends Fragment {
                 "Friday - Meatballs - 81/67"
         };
 
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        ListView forecastList = (ListView) rootView.findViewById(R.id.listView_Layout);
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textView, exampleData);
 
         forecastList.setAdapter(adapter);
@@ -52,17 +84,37 @@ public class ForecastFragment extends Fragment {
         return rootView;
     }
 
-    private class FetchForecastTask extends AsyncTask<String, Void, String> {
+    private class FetchForecastTask extends AsyncTask<String, Void, Void> {
+
 
         @Override
-        protected String doInBackground(String... params) {
+        protected Void doInBackground(String... params) {
+
+            String postalCode = params[0];
+            String country = "USA";
+
+            Uri.Builder builder = new Uri.Builder();
+            builder.scheme("http")
+                    .authority("api.openweathermap.org")
+                    .appendPath("data")
+                    .appendPath("2.5")
+                    .appendPath("forecast")
+                    .appendPath("daily")
+                    .appendQueryParameter("q", postalCode + "," + country)
+                    .appendQueryParameter("units", "metric")
+                    .appendQueryParameter("cnt", "7");
+
+
+            String myUrl = builder.build().toString();
+
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
+            Log.v(LOG_TAG, "DOING IN BACKGROUND");
 
             String forecastJsonStr = null;
 
             try {
-                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94103,USA&units=metric&cnt=7");
+                URL url = new URL(myUrl);
 
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
@@ -85,6 +137,9 @@ public class ForecastFragment extends Fragment {
                     return null;
                 }
                 forecastJsonStr = builder.toString();
+
+                Log.v(LOG_TAG, "Forecast JSON String:" + forecastJsonStr);
+
             } catch (IOException e){
                 Log.e(LOG_TAG, "Error", e);
                 return null;
@@ -100,6 +155,7 @@ public class ForecastFragment extends Fragment {
                     }
                 }
             }
+            return null;
         }
     }
 }
