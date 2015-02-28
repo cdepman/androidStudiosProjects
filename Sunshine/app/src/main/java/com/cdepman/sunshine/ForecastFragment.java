@@ -47,10 +47,10 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
         Log.v(LOG_TAG, "ITEM SELECTED");
         if (id == R.id.action_refresh){
-            new FetchForecastTask().execute();
+            new FetchForecastTask().execute("94103");
             Log.v(LOG_TAG, "REFRESH SELECTED");
             return true;
-        }
+        };
         return super.onOptionsItemSelected(item);
     }
 
@@ -84,18 +84,24 @@ public class ForecastFragment extends Fragment {
         return rootView;
     }
 
-    private class FetchForecastTask extends AsyncTask<String, Void, Void> {
-
+    private class FetchForecastTask extends AsyncTask<String, Void, String> {
 
         @Override
-        protected Void doInBackground(String... params) {
+        protected void onPostExecute(String result) {
+            Log.v(LOG_TAG, "Downloaded: " + result);
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
 
             String postalCode = params[0];
             String country = "USA";
+            final String SCHEME = "http";
+            final String BASE = "api.openweathermap.org";
 
-            Uri.Builder builder = new Uri.Builder();
-            builder.scheme("http")
-                    .authority("api.openweathermap.org")
+            Uri.Builder uriBuilder = new Uri.Builder();
+            uriBuilder.scheme(SCHEME)
+                    .authority(BASE)
                     .appendPath("data")
                     .appendPath("2.5")
                     .appendPath("forecast")
@@ -105,13 +111,11 @@ public class ForecastFragment extends Fragment {
                     .appendQueryParameter("cnt", "7");
 
 
-            String myUrl = builder.build().toString();
+            String myUrl = uriBuilder.build().toString();
 
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
-            Log.v(LOG_TAG, "DOING IN BACKGROUND");
-
-            String forecastJsonStr = null;
+            String forecastJsonStr;
 
             try {
                 URL url = new URL(myUrl);
@@ -155,7 +159,7 @@ public class ForecastFragment extends Fragment {
                     }
                 }
             }
-            return null;
+            return forecastJsonStr;
         }
     }
 }
