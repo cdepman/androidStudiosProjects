@@ -14,12 +14,17 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import org.json.JSONException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by charlie on 2/27/15.
@@ -27,6 +32,9 @@ import java.net.URL;
 public class ForecastFragment extends Fragment {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
+
+    List<String> forecastData = new ArrayList<>();
+    ArrayAdapter<String> adapter;
 
     public ForecastFragment() {
     }
@@ -59,25 +67,11 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        String[] exampleData = {
-                "Today - Sunny - 88/63",
-                "Tomorrow - Cloudy - 81/67",
-                "Thursday - Rainy - 81/67",
-                "Friday - Meatballs - 81/67",
-                "Friday - Meatballs - 81/67",
-                "Friday - Meatballs - 81/67",
-                "Friday - Meatballs - 81/67",
-                "Friday - Meatballs - 81/67",
-                "Friday - Meatballs - 81/67",
-                "Friday - Meatballs - 81/67",
-                "Friday - Meatballs - 81/67"
-        };
-
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         ListView forecastList = (ListView) rootView.findViewById(R.id.listView_Layout);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textView, exampleData);
+        adapter = new ArrayAdapter<>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textView, forecastData);
 
         forecastList.setAdapter(adapter);
 
@@ -89,6 +83,18 @@ public class ForecastFragment extends Fragment {
         @Override
         protected void onPostExecute(String result) {
             Log.v(LOG_TAG, "Downloaded: " + result);
+            WeatherDataParser parser = new WeatherDataParser();
+            try {
+                forecastData = new ArrayList<>(Arrays.asList(parser.getWeatherDataFromJson(result, 7)));
+                adapter.clear();
+                for (String forecast : forecastData){
+                    adapter.add(forecast);
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+                forecastData = null;
+            }
         }
 
         @Override
