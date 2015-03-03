@@ -1,5 +1,6 @@
 package com.cdepman.sunshine;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -11,8 +12,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 
@@ -74,6 +77,16 @@ public class ForecastFragment extends Fragment {
         adapter = new ArrayAdapter<>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textView, forecastData);
 
         forecastList.setAdapter(adapter);
+        forecastList.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+              Context context = getActivity();
+              CharSequence text = forecastData.get(i);
+              int duration = Toast.LENGTH_LONG;
+              Toast toast = Toast.makeText(context, text, duration);
+              toast.show();
+            }
+        });
 
         return rootView;
     }
